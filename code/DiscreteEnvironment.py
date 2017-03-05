@@ -19,10 +19,6 @@ class DiscreteEnvironment(object):
 		for idx in range(self.dimension):
 			self.num_cells[idx] = np.ceil((upper_limits[idx] - lower_limits[idx])/resolution)
 
-		self.node_convrsn = self.dimension*[1]
-		for idx in range(self.node_convrsn):
-			self.node_convrsn[idx] = self.num_cells[idx]**idx
-
 
 
 
@@ -53,8 +49,10 @@ class DiscreteEnvironment(object):
 		# to a grid coordinate in discrete space
 		#
 		coord = [0] * self.dimension
-		coord = round(np.dot((config - np.asarray(self.lower_limits))/(np.asarray(self.upper_limits) - np.asarray(self.lower_limits))), (np.asarray(self.num_cells)))
-		coord.tolist()
+		for idx in range(self.dimension):
+			coord[idx] = (config[idx] - self.lower_limits[idx])
+			coord[idx] = coord[idx]/(self.upper_limits[idx] - self.lower_limits[idx])
+			coord[idx] = round(coord[idx]*self.num_cells[idx])
 		return coord
 
 	def GridCoordToConfiguration(self, coord):
@@ -64,8 +62,11 @@ class DiscreteEnvironment(object):
 		# to a configuration in the full configuration space
 		#
 		config = [0] * self.dimension
-		config =  (np.asarray(coord + .5))*((np.asarray(self.upper_limits) - np.asarray(self.lower_limits))/np.asaray(self.num_cells))
-		config.tolist()
+		for idx in range(self.dimension):
+			config[idx] = coord[idx] + .5
+			config[idx] = config[idx]*(self.upper_limits[idx] - self.lower_limits[idx])
+			config[idx] = config[idx]/self.num_cells[idx]
+			config[idx] = round(config[idx], 2)
 		return config
 
 	def GridCoordToNodeId(self,coord):
@@ -74,7 +75,10 @@ class DiscreteEnvironment(object):
 		# This function maps a grid coordinate to the associated
 		# node id 
 		node_id = 0
-		node_id = np.dot(np.transpose(np.asarray(coord)), np.asarray(self.node_convrsn))
+		num_cells_factor = 1
+		for idx in range(self.dimension):
+			node_id += coord[idx]*num_cells_factor
+			num_cells_factor = num_cells_factor*self.num_cells[idx] 
 		return node_id
 
 	def NodeIdToGridCoord(self, node_id):
@@ -82,15 +86,16 @@ class DiscreteEnvironment(object):
 		# TODO:
 		# This function maps a node id to the associated
 		# grid coordinate
-		#coord = [0] * self.dimension
+		coord = [0] * self.dimension
 		rem = node_id
-		coord = []
-		for idx in xrange(self.dimension, 0):
-			dim_id  = (self.num_cells[idx])**idx)
-			coord.append(rem//dim_id)
-			rem = rem%dim_id
-		np.reverse(coord)
+		product = np.prod(np.array(self.num_cells))
+		for idx in xrange(self.dimension, 0, -1):
+			idx = idx - 1
+			product  = (product/self.num_cells[idx])
+			coord[idx] = (rem//product)
+			rem = rem%product
 		return coord
-		
-		
+
+
+
 		
