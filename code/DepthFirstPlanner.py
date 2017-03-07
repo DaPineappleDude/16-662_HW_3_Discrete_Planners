@@ -17,7 +17,7 @@ class DepthFirstPlanner(object):
         #  and n is the dimension of the robots configuration space
         
         start_id = self.planning_env.discrete_env.ConfigurationToNodeId(start_config)
-        goal_id = self.planning_env.discrete_env.ConfigurationToNodeId(start_config)
+        goal_id  = self.planning_env.discrete_env.ConfigurationToNodeId(goal_config)
         stack = [start_id]
         
         while not stack:
@@ -27,22 +27,25 @@ class DepthFirstPlanner(object):
         	neighbors = planning_env.GetSuccessors(curr_id)
         	for elem in range(len(neighbors)):
         		if elem == goal_id:
-        			self.nodes = self.nodes + {goal_id, elem}
+        			self.nodes[goal_id] = elem
         			break
         		# check if the (collision free) neighbor is visited
                 # collision check should be done in GetSuccessors function 
         	    if elem not in self.nodes:
-        			self.nodes = self.nodes + {elem, curr_id}
+        			self.nodes[elem] = curr_id
         			stack.append(elem)
         
         # initialize plot (only for Simple Environment visualization)
         if self.visualize and hasattr(self.planning_env, 'InitializePlot'):
             self.planning_env.InitializePlot(goal_config)
-
+        
+        # generate execution plan
+       
         plan.append(goal_config)
         node_id = goal_id 
         last_id = 0
         last_config = []
+        node_config = goal_config
         while self.nodes.get(node_id) != start_id:
         	last_id = node_id
         	node_id = self.nodes.get(node_id)
@@ -52,10 +55,9 @@ class DepthFirstPlanner(object):
             # only for Simple Environment visualization 
             self.planning_env.PlotEdge(node_config, last_config)
 
-        plan.append(start_config)
-        # only for Simple Environment visualization
-        self.planning_env.PlotEdge(start_config, last_config)       
-        
+        plan.append(start_config)  
+        # only for Simple Environment visualization 
+        self.planning_env.PlotEdge(start_config, node_config)  
         plan = plan.reverse()
         
         return plan
