@@ -14,7 +14,7 @@ from HeuristicRRTPlanner import HeuristicRRTPlanner
 
 def main(robot, planning_env, planner):
 
-    raw_input('Press any key to begin planning')
+    #raw_input('Press any key to begin planning')
 
     start_config = numpy.array(robot.GetCurrentConfiguration())
     if robot.name == 'herb':
@@ -23,6 +23,9 @@ def main(robot, planning_env, planner):
         goal_config = numpy.array([3.0, 0.0])
 
     plan = planner.Plan(start_config, goal_config)
+    if visualize:
+        for i in range(len(plan)-1):                        # ONLY FOR SIMPLE ROBOT
+            planning_env.PlotEdge(plan[i], plan[i+1], 'r')
     traj = robot.ConvertPlanToTrajectory(plan)
 
     raw_input('Press any key to execute trajectory')

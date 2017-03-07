@@ -1,5 +1,6 @@
-import numpy
+import numpy as np
 import pylab as pl
+import envcommon as ec
 from DiscreteEnvironment import DiscreteEnvironment
 
 class SimpleEnvironment(object):
@@ -14,40 +15,50 @@ class SimpleEnvironment(object):
         table = self.robot.GetEnv().ReadKinBodyXMLFile('models/objects/table.kinbody.xml')
         self.robot.GetEnv().Add(table)
 
-        table_pose = numpy.array([[ 0, 0, -1, 1.5], 
+        table_pose = np.array([[ 0, 0, -1, 1.5], 
                                   [-1, 0,  0, 0], 
                                   [ 0, 1,  0, 0], 
                                   [ 0, 0,  0, 1]])
         table.SetTransform(table_pose)
+    def GetCollision(self, config):
+
+        pose = np.array([[ 1., 0,  0, 0], 
+                         [ 0, 1.,  0, 0], 
+                         [ 0, 0,  1., 0], 
+                         [ 0, 0,  0, 1.]])
+        pose[:2,3] = config
+        self.robot.SetTransform(pose)
+        collision = self.robot.GetEnv().CheckCollision(self.robot)
+
+        return collision
 
     def GetSuccessors(self, node_id):
 
         successors = []
 
-        # TODO: Here you will implement a function that looks
-        #  up the configuration associated with the particular node_id
-        #  and return a list of node_ids that represent the neighboring
-        #  nodes
+        node_config = self.discrete_env.NodeIdToConfiguration(node_id)
+
+        neighbors_config = ec.neighbors(node_config, self.discrete_env, self.GetCollision)
+        for config in neighbors_config:
+            successors.append(self.discrete_env.ConfigurationToNodeId(config))
         
         return successors
 
     def ComputeDistance(self, start_id, end_id):
 
-        dist = 0
+        start_coord = self.discrete_env.NodeIdToGridCoord(start_id)
+        end_coord = self.discrete_env.NodeIdToGridCoord(end_id)
 
-        # TODO: Here you will implement a function that 
-        # computes the distance between the configurations given
-        # by the two node ids
+        dist = ec.cost(start_coord, end_coord)
 
         return dist
 
     def ComputeHeuristicCost(self, start_id, goal_id):
         
-        cost = 0
+        start_coord = self.discrete_env.NodeIdToGridCoord(start_id)
+        goal_coord = self.discrete_env.NodeIdToGridCoord(goal_id)
 
-        # TODO: Here you will implement a function that 
-        # computes the heuristic cost between the configurations
-        # given by the two node ids
+        cost = ec.cost(start_coord, goal_coord)
 
         return cost
 
@@ -77,10 +88,10 @@ class SimpleEnvironment(object):
         pl.ion()
         pl.show()
         
-    def PlotEdge(self, sconfig, econfig):
+    def PlotEdge(self, sconfig, econfig, color):
         pl.plot([sconfig[0], econfig[0]],
                 [sconfig[1], econfig[1]],
-                'k.-', linewidth=2.5)
+                color+'.-', linewidth=2.5)
         pl.draw()
 
         

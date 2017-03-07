@@ -1,4 +1,5 @@
 import numpy
+import envcommon as ec
 from DiscreteEnvironment import DiscreteEnvironment
 
 class HerbEnvironment(object):
@@ -7,6 +8,8 @@ class HerbEnvironment(object):
         
         self.robot = herb.robot
         self.lower_limits, self.upper_limits = self.robot.GetActiveDOFLimits()
+        print self.lower_limits
+        print self.upper_limits
         self.discrete_env = DiscreteEnvironment(resolution, self.lower_limits, self.upper_limits)
 
         # account for the fact that snapping to the middle of the grid cell may put us over our
@@ -33,35 +36,52 @@ class HerbEnvironment(object):
                                    [ 0.02023372, -0.9431516 , -0.33174637,  1.61502194],
                                    [ 0.        ,  0.        ,  0.        ,  1.        ]])
         self.robot.GetEnv().GetViewer().SetCamera(camera_pose)
+    def GetCollision(self, config):
+
+        self.robot.SetActiveDOFValues(config)
+        rigidBody = self.robot.GetEnv().GetBodies()
+        bodyNum = len(rigidBody)
+
+        if bodyNum == 2: 
+            check = self.robot.GetEnv().CheckCollision(rigidBody[0], rigidBody[1])
     
+        elif bodyNum == 3: 
+            check = self.robot.GetEnv().CheckCollision(rigidBody[0],rigidBody[1],rigidBody[2])
+    
+        if check is not False and self.robot.CheckSelfCollision() is not False:
+            collision = False
+        else:
+            collision = True
+
+        return collision 
+
     def GetSuccessors(self, node_id):
 
         successors = []
 
-        # TODO: Here you will implement a function that looks
-        #  up the configuration associated with the particular node_id
-        #  and return a list of node_ids that represent the neighboring
-        #  nodes
-        
+        node_config = self.discrete_env.NodeIdToConfiguration(node_id)
+        #print "node_id in GetSuccessors: %d" % node_id
+        #print node_config
+        neighbors_config = ec.neighbors(node_config, self.discrete_env, self.GetCollision)
+        for config in neighbors_config:
+            successors.append(self.discrete_env.ConfigurationToNodeId(config)) 
         return successors
 
     def ComputeDistance(self, start_id, end_id):
 
-        dist = 0
+        start_coord = self.discrete_env.NodeIdToGridCoord(start_id)
+        end_coord = self.discrete_env.NodeIdToGridCoord(end_id)
 
-        # TODO: Here you will implement a function that 
-        # computes the distance between the configurations given
-        # by the two node ids
-       
+        dist = ec.cost(start_coord, end_coord)
+ 
         return dist
 
     def ComputeHeuristicCost(self, start_id, goal_id):
         
-        cost = 0
+        start_coord = self.discrete_env.NodeIdToGridCoord(start_id)
+        goal_coord = self.discrete_env.NodeIdToGridCoord(goal_id)
 
-        # TODO: Here you will implement a function that 
-        # computes the heuristic cost between the configurations
-        # given by the two node ids
+        cost = ec.cost(start_coord, goal_coord)
         
         return cost
 

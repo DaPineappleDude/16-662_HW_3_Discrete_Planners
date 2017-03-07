@@ -51,8 +51,8 @@ class DiscreteEnvironment(object):
 		coord = [0] * self.dimension
 		for idx in range(self.dimension):
 			coord[idx] = (config[idx] - self.lower_limits[idx])
-			coord[idx] = coord[idx]/(self.upper_limits[idx] - self.lower_limits[idx])
-			coord[idx] = round(coord[idx]*self.num_cells[idx])
+			coord[idx] = round(coord[idx]/self.resolution)
+			#coord[idx] = round(coord[idx]*self.num_cells[idx])
 		return coord
 
 	def GridCoordToConfiguration(self, coord):
@@ -63,10 +63,7 @@ class DiscreteEnvironment(object):
 		#
 		config = [0] * self.dimension
 		for idx in range(self.dimension):
-			config[idx] = coord[idx] + .5
-			config[idx] = config[idx]*(self.upper_limits[idx] - self.lower_limits[idx])
-			config[idx] = config[idx]/self.num_cells[idx]
-			config[idx] = round(config[idx], 2)
+			config[idx] = self.lower_limits[idx] + coord[idx] * self.resolution
 		return config
 
 	def GridCoordToNodeId(self,coord):
@@ -76,6 +73,7 @@ class DiscreteEnvironment(object):
 		# node id 
 		node_id = 0
 		num_cells_factor = 1
+		
 		for idx in range(self.dimension):
 			node_id += coord[idx]*num_cells_factor
 			num_cells_factor = num_cells_factor*self.num_cells[idx] 
@@ -90,9 +88,11 @@ class DiscreteEnvironment(object):
 		rem = node_id
 		product = np.prod(np.array(self.num_cells))
 		for idx in xrange(self.dimension, 0, -1):
-			idx = idx - 1
+			idx = idx - 1 
 			product  = (product/self.num_cells[idx])
-			coord[idx] = (rem//product)
+			#import IPython
+			#IPython.embed()
+			coord[idx] = int(rem/product)
 			rem = rem%product
 		return coord
 
