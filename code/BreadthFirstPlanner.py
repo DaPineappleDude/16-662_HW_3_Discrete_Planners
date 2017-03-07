@@ -1,5 +1,6 @@
 from collections import deque
 import numpy as np
+
 class BreadthFirstPlanner(object):
     
     def __init__(self, planning_env, visualize):
