@@ -85,3 +85,126 @@ class HerbEnvironment(object):
         
         return cost
 
+#
+#HERB ENVIRONMENT HRRT METHODS
+#
+#
+#
+    def SetGoalParameters(self, goal_config, p = 0.2):
+        self.goal_config = goal_config
+        self.p = p
+        
+
+    def GenerateRandomConfiguration(self):
+        config = [0] * len(self.robot.GetActiveDOFIndices())
+            
+        #
+        # TODO: Generate and return a random configuration
+        #
+        s = self.robot.GetActiveDOFValues()
+        lower_limits, upper_limits = self.robot.GetActiveDOFLimits()
+        while True:
+            config = numpy.multiply(numpy.subtract(upper_limits, lower_limits), numpy.random.random_sample((len(config),))) +  numpy.array(lower_limits)
+            self.robot.SetActiveDOFValues(config)
+            if(not((self.robot.GetEnv().CheckCollision(self.robot, self.robot.GetEnv().GetKinBody('conference_table'))))):
+                self.robot.SetActiveDOFValues(s)
+                return numpy.array(config)
+
+    def Extend(self, start_config, end_config):
+        
+        #
+        # TODO: Implement a function which attempts to extend from 
+        #   a start configuration to a goal configuration
+        #
+        s = self.robot.GetActiveDOFValues()
+        num_steps = 10
+        epsilon = 0.01
+        dist = self.ComputeDistance(start_config, end_config)
+        step_size = dist/num_steps
+        
+        direction = (end_config - start_config)/dist
+        
+        config = start_config + step_size*direction
+        lower_limits, upper_limits = numpy.array(self.robot.GetActiveDOFLimits())
+
+        lower_limits = lower_limits.tolist()
+        upper_limits = upper_limits.tolist()
+        
+        steps = 1
+        while True:
+            self.robot.SetActiveDOFValues(config)
+            #Check if the first step is out of limits, return None
+            if((steps==1) and ((config.tolist() < lower_limits) or (config.tolist() > upper_limits))):
+                self.robot.SetActiveDOFValues(s)
+               # print "none"
+                return None
+            #Check if the first step collides then return None
+            elif((steps==1) and (self.robot.GetEnv().CheckCollision(self.robot.GetEnv().GetBodies()[0], self.robot.GetEnv().GetBodies()[1]) or self.robot.CheckSelfCollision())):
+                self.robot.SetActiveDOFValues(s)
+              #  print "none"
+                return None
+            #If config is out of limits, return previous step
+            elif((config.tolist() < lower_limits) or (config.tolist() > upper_limits)):
+                self.robot.SetActiveDOFValues(s)
+              #  print  'out of limits'
+                return config - step_size*direction
+            #If collision occured later, return previous step
+            elif((self.robot.GetEnv().CheckCollision(self.robot.GetEnv().GetBodies()[0], self.robot.GetEnv().GetBodies()[1]) or self.robot.CheckSelfCollision())):
+                self.robot.SetActiveDOFValues(s)
+              #  print  'return previous step'
+                return config - step_size*direction
+
+            if numpy.all((numpy.subtract(config, end_config) < epsilon)):
+                self.robot.SetActiveDOFValues(s)
+               # print 'end config'
+                return end_config
+            config += step_size*direction
+            steps += 1
+        pass
+        
+
+    def ShortenPath(self, path, timeout=5.0):
+        
+        # 
+        # TODO: Implement a function which performs path shortening
+        #  on the given path.  Terminate the shortening after the 
+        #  given timout (in seconds).
+        #
+        delta = 1
+        current_time = time.clock()
+
+        while(not(delta > 5)):
+            
+            leng = len(path)
+            g = random.randint(1, leng)
+            h = random.randint(1, leng-2)
+
+            while(g >= h):
+                g = random.randint(1, leng)
+                h = random.randint(1, leng-2)
+            
+            ##### two points ######
+
+            first_vertex =  ((numpy.array(path[g]) +  numpy.array(path[g-1]))/2).tolist()
+            second_vertex = ((numpy.array(path[h]) +  numpy.array(path[h+1]))/2).tolist()
+            
+            config = self.Extend(numpy.asarray(first_vertex), numpy.asarray(second_vertex))
+            
+            if(config != None):
+                #print vertex, vertex.dtype, local_path[ul], local_path[ul].dtype
+                if all(map(lambda v: v in config, numpy.asarray(second_vertex))):
+            
+                    path[g] = first_vertex
+                    path[h] = second_vertex
+                    for remove_ind in range(g+1, h):
+                        path.pop(g+1)
+            delta = time.clock()  - current_time
+
+        distance_final = 0;
+        print "final vertices", len(path)
+        for i in range(len(path)-1):
+            distance_final += self.ComputeDistance(path[i],path[i+1])
+        print  "shortened distance", distance_final
+        return path
+
+

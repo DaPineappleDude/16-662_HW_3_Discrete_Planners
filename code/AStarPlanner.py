@@ -9,7 +9,7 @@ class AStarPlanner(object):
         self.visualize = visualize
         self.nodes = dict()
 
-    def heuristic (self, start_id, end_id, multiple = 1):
+    def heuristic (self, start_id, end_id, multiple = 5):
         cost = self.planning_env.ComputeHeuristicCost(start_id, end_id)
         cost = cost * multiple
         return cost
