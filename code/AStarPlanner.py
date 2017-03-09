@@ -1,5 +1,6 @@
 import sets
 import collections
+import pdb
 
 class AStarPlanner(object):
     
@@ -8,8 +9,9 @@ class AStarPlanner(object):
         self.visualize = visualize
         self.nodes = dict()
 
-    def heuristic (self, start_id, end_id):
+    def heuristic (self, start_id, end_id, multiple = 1):
         cost = self.planning_env.ComputeHeuristicCost(start_id, end_id)
+        cost = cost * multiple
         return cost
 
     def distance (self, start_id, goal_id):
@@ -24,10 +26,10 @@ class AStarPlanner(object):
         idx = 1
         for iid in openList:
             if idx == 1:
-                lowestId = iid                
-            if costs[iid] < costs[lowestId]:
+                lowestId = iid
+                idx += 1
+            elif costs[iid] < costs[lowestId]:
               lowestId  = iid
-              
         return lowestId
 
     def Plan(self, start_config, goal_config):
@@ -57,12 +59,9 @@ class AStarPlanner(object):
 
         curr_id = start_id
         while openList:
-            # Save previous id to compoute operating cost
-#                prev_id = curr_id
             # Get lowest evaluation cost ID
             curr_id = self.getLowestId (openList, ecosts)
             # Remove the best curr_id from open, add to closed
-            import pdb; pdb.set_trace()
             openList.remove(curr_id)
             closedList.append(curr_id)
             # Get neighbors
@@ -101,7 +100,6 @@ class AStarPlanner(object):
         while plan_id != start_id:
             config = self.getConfig(plan_id)
             plan.append(config)
-            import pdb; pdb.set_trace()
             plan_id = edges[plan_id]
             
         plan.append(start_config)
