@@ -16,6 +16,11 @@ class SimpleEnvironment(object):
         self.robot = herb.robot
         self.lower_limits = [-5., -5.]
         self.upper_limits = [5., 5.]
+        
+        #HRRT 
+        self.boundary_limits = [[-5., -5.], [5., 5.]]
+
+        
         self.discrete_env = DiscreteEnvironment(resolution, self.lower_limits, self.upper_limits)
 
         # add an obstacle
@@ -27,6 +32,7 @@ class SimpleEnvironment(object):
                                   [ 0, 1,  0, 0], 
                                   [ 0, 0,  0, 1]])
         table.SetTransform(table_pose)
+        self.p = 0.0
 
     def GetCollision(self, config):
 
@@ -96,10 +102,10 @@ class SimpleEnvironment(object):
         pl.ion()
         pl.show()
         
-    def PlotEdge(self, sconfig, econfig, color):
+    def PlotEdge(self, sconfig, econfig, color = 'k--'):
         pl.plot([sconfig[0], econfig[0]],
                 [sconfig[1], econfig[1]],
-                color+'.-', linewidth=2.5)
+                color, linewidth=2.5)
         pl.draw()
 
 
@@ -134,15 +140,15 @@ class SimpleEnvironment(object):
                 return np.array(config)
 
 #    DIFFERENT DISTANCE
-#    def ComputeDistance(self, start_config, end_config):
-#        #
-#        # TODO: Implement a function which computes the distance between
-#        # two configurations
-#        #
-#        start_config_temp = np.array(start_config)
-#        end_config_temp   = np.array(end_config)
-#        return np.linalg.norm(start_config_temp - end_config_temp)
-#        pass
+    def HRRTComputeDistance(self, start_config, end_config):
+       #
+        # TODO: Implement a function which computes the distance between
+        # two configurations
+        #
+        start_config_temp = np.array(start_config)
+        end_config_temp   = np.array(end_config)
+        return np.linalg.norm(start_config_temp - end_config_temp)
+        pass
 
     def Extend(self, start_config, end_config):
         
@@ -153,7 +159,7 @@ class SimpleEnvironment(object):
         s = self.robot.GetTransform()
         num_steps = 100
         epsilon = 0.001
-        dist = self.ComputeDistance(start_config, end_config)
+        dist = self.HRRTComputeDistance(start_config, end_config)
         step_size = dist/num_steps
         
         direction = (end_config - start_config)/dist
@@ -194,7 +200,7 @@ class SimpleEnvironment(object):
               #  print "previous step"
                 return config - step_size*direction
 
-            if np.all((self.ComputeDistance(config, end_config) < epsilon)):
+            if np.all((self.HRRTComputeDistance(config, end_config) < epsilon)):
                 self.robot.SetTransform(s)
                # print "jai mata di"
                 return config
@@ -214,7 +220,7 @@ class SimpleEnvironment(object):
         
         distance_initial = 0;
         for i in range(len(path)-1):
-            distance_initial += self.ComputeDistance(path[i],path[i+1])
+            distance_initial += self.HRRTComputeDistance(path[i],path[i+1])
         
         print distance_initial, "initial distance"
         
@@ -238,7 +244,7 @@ class SimpleEnvironment(object):
                 #print vertex, vertex.dtype, local_path[ul], local_path[ul].dtype
                 #print config, np.asarray(second_vertex), "hey"
 
-                if (self.ComputeDistance(config, np.asarray(second_vertex)) < 0.00001):
+                if (self.HRRTComputeDistance(config, np.asarray(second_vertex)) < 0.00001):
                 #if all(map(lambda v: v in config, np.asarray(second_vertex))):
             
                     path[g] = first_vertex
@@ -249,7 +255,7 @@ class SimpleEnvironment(object):
         distance_final = 0;
         print "Final vertices:", len(path) 
         for i in range(len(path)-1):
-            distance_final += self.ComputeDistance(path[i],path[i+1])
+            distance_final += self.HRRTComputeDistance(path[i],path[i+1])
         for points in xrange(len(path)-1):
             self.PlotEdge(path[points], path[points+1], 'g')           
 

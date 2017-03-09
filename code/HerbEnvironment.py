@@ -36,6 +36,8 @@ class HerbEnvironment(object):
                                    [ 0.02023372, -0.9431516 , -0.33174637,  1.61502194],
                                    [ 0.        ,  0.        ,  0.        ,  1.        ]])
         self.robot.GetEnv().GetViewer().SetCamera(camera_pose)
+        self.p = 0.0
+
     def GetCollision(self, config):
 
         self.robot.SetActiveDOFValues(config)
@@ -93,7 +95,16 @@ class HerbEnvironment(object):
     def SetGoalParameters(self, goal_config, p = 0.2):
         self.goal_config = goal_config
         self.p = p
+ 
+    def HRRTComputeDistance(self, start_config, end_config):
         
+        start_config_temp = numpy.array(start_config)
+        end_config_temp   = numpy.array(end_config)
+        
+        return numpy.linalg.norm(start_config_temp - end_config_temp)
+        pass
+
+       
 
     def GenerateRandomConfiguration(self):
         config = [0] * len(self.robot.GetActiveDOFIndices())
@@ -119,7 +130,7 @@ class HerbEnvironment(object):
         s = self.robot.GetActiveDOFValues()
         num_steps = 10
         epsilon = 0.01
-        dist = self.ComputeDistance(start_config, end_config)
+        dist = self.HRRTComputeDistance(start_config, end_config)
         step_size = dist/num_steps
         
         direction = (end_config - start_config)/dist
@@ -203,7 +214,7 @@ class HerbEnvironment(object):
         distance_final = 0;
         print "final vertices", len(path)
         for i in range(len(path)-1):
-            distance_final += self.ComputeDistance(path[i],path[i+1])
+            distance_final += self.HRRTComputeDistance(path[i],path[i+1])
         print  "shortened distance", distance_final
         return path
 
