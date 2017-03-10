@@ -8,8 +8,6 @@ class HerbEnvironment(object):
         
         self.robot = herb.robot
         self.lower_limits, self.upper_limits = self.robot.GetActiveDOFLimits()
-        print self.lower_limits
-        print self.upper_limits
         self.discrete_env = DiscreteEnvironment(resolution, self.lower_limits, self.upper_limits)
 
         # account for the fact that snapping to the middle of the grid cell may put us over our
@@ -43,18 +41,17 @@ class HerbEnvironment(object):
         self.robot.SetActiveDOFValues(config)
         rigidBody = self.robot.GetEnv().GetBodies()
         bodyNum = len(rigidBody)
-
+        
         if bodyNum == 2: 
             check = self.robot.GetEnv().CheckCollision(rigidBody[0], rigidBody[1])
     
         elif bodyNum == 3: 
             check = self.robot.GetEnv().CheckCollision(rigidBody[0],rigidBody[1],rigidBody[2])
     
-        if check is not False and self.robot.CheckSelfCollision() is not False:
+        if check is False and self.robot.CheckSelfCollision() is False:
             collision = False
         else:
             collision = True
-
         return collision 
 
     def GetSuccessors(self, node_id):
@@ -62,9 +59,8 @@ class HerbEnvironment(object):
         successors = []
 
         node_config = self.discrete_env.NodeIdToConfiguration(node_id)
-        #print "node_id in GetSuccessors: %d" % node_id
-        #print node_config
         neighbors_config = ec.neighbors(node_config, self.discrete_env, self.GetCollision)
+
         for config in neighbors_config:
             successors.append(self.discrete_env.ConfigurationToNodeId(config)) 
         return successors

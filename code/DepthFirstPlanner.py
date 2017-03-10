@@ -26,9 +26,6 @@ class DepthFirstPlanner(object):
         		
             neighbors = self.planning_env.GetSuccessors(curr_id)
             for elem in neighbors:
-                if self.visualize:
-                    self.planning_env.PlotEdge(self.planning_env.discrete_env.NodeIdToConfiguration(curr_id), \
-                                               self.planning_env.discrete_env.NodeIdToConfiguration(elem), 'k')
                 if elem == goal_id:
                     self.nodes[goal_id] = curr_id
                     success = True
@@ -38,6 +35,9 @@ class DepthFirstPlanner(object):
                 elif elem not in self.nodes:
                     self.nodes[elem] = curr_id
                     stack.append(elem)
+                    if self.visualize:
+                        self.planning_env.PlotEdge(self.planning_env.discrete_env.NodeIdToConfiguration(curr_id), \
+                                                   self.planning_env.discrete_env.NodeIdToConfiguration(elem), 'k')
        
         plan.append(goal_config)
         node_id = goal_id 

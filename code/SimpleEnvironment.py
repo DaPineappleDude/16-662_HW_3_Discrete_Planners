@@ -51,8 +51,8 @@ class SimpleEnvironment(object):
         successors = []
 
         node_config = self.discrete_env.NodeIdToConfiguration(node_id)
-
         neighbors_config = ec.neighbors(node_config, self.discrete_env, self.GetCollision)
+
         for config in neighbors_config:
             successors.append(self.discrete_env.ConfigurationToNodeId(config))
         

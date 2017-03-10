@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import argparse, numpy, openravepy, time
+import argparse, openravepy, time, numpy
+import numpy.linalg as la
 
 from HerbRobot import HerbRobot
 from SimpleRobot import SimpleRobot
@@ -22,10 +23,20 @@ def main(robot, planning_env, planner):
     else:
         goal_config = numpy.array([3.0, 0.0])
 
+    ts = time.time()
     plan = planner.Plan(start_config, goal_config)
+    print "Execution Time: %0.2f" % (time.time() - ts)
+    print "Vertex Number: %d" % len(plan)
+    path_length = 0
+    for i in range(len(plan)-1):
+       path_length += la.norm(numpy.array(plan[i])-numpy.array(plan[i+1]))
+    print "Path Legnth: %0.2f" % path_length
+
     if visualize:
         for i in range(len(plan)-1):                        # ONLY FOR SIMPLE ROBOT
             planning_env.PlotEdge(plan[i], plan[i+1], 'r')
+
+
     traj = robot.ConvertPlanToTrajectory(plan)
 
     raw_input('Press any key to execute trajectory')
@@ -57,7 +68,7 @@ if __name__ == "__main__":
 
     env = openravepy.Environment()
     env.SetViewer('qtcoin')
-    env.GetViewer().SetName('Homework 2 Viewer')
+    env.GetViewer().SetName('Homework 3 Viewer')
 
     # First setup the environment and the robot
     visualize = args.visualize

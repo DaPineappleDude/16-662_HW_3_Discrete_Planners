@@ -17,7 +17,7 @@ class DiscreteEnvironment(object):
 		# Figure out the number of grid cells that are in each dimension
 		self.num_cells = self.dimension*[0]
 		for idx in range(self.dimension):
-			self.num_cells[idx] = np.ceil((upper_limits[idx] - lower_limits[idx])/resolution)
+			self.num_cells[idx] = np.ceil((upper_limits[idx] - lower_limits[idx])/resolution)+1
 
 
 
@@ -90,8 +90,6 @@ class DiscreteEnvironment(object):
 		for idx in xrange(self.dimension, 0, -1):
 			idx = idx - 1 
 			product  = (product/self.num_cells[idx])
-			#import IPython
-			#IPython.embed()
 			coord[idx] = int(rem/product)
 			rem = rem%product
 		return coord
