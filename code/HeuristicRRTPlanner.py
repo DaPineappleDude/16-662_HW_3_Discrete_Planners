@@ -12,10 +12,11 @@ class HeuristicRRTPlanner(object):
     def computeVertexCost(self, vid, vertexCosts, tree): 
 #        pdb.set_trace()
         if vid != 0:        
+            vertexCost = 0.0
             prevId = tree.edges[vid]
-            vertexCost = vertexCosts[vid] + vertexCosts[prevId]
+            vertexCost = vertexCosts[vid]# + vertexCosts[prevId]
         else:
-            vertexCost = 0
+            vertexCost = vertexCosts[vid]
         
         return vertexCost
             
@@ -33,7 +34,7 @@ class HeuristicRRTPlanner(object):
         #  and n is the dimension of the robots configuration space
         plan_temp = []
         plan_temp.append(start_config)
-        tree.AddVertex(start_config)  
+#        tree.AddVertex(start_config)  
         plan_parent = []
         plan_parent.append(start_config);
 
@@ -46,16 +47,18 @@ class HeuristicRRTPlanner(object):
        
         #heuristic stuff
         # initialize first vertex cost (start id)
-        vertexCosts = {0 : 0}
+
+
         # get node ids for goal, start
         startId = self.planning_env.discrete_env.ConfigurationToNodeId(start_config)
         goalId  = self.planning_env.discrete_env.ConfigurationToNodeId(goal_config)
-        # compute optimal heuristic cost constant 
+        startHeuristic = self.planning_env.ComputeHeuristicCost(startId, goalId)
+        vertexCosts = {0 : startHeuristic}       # compute optimal heuristic cost constant 
         optCost = self.planning_env.ComputeHeuristicCost(startId, goalId)
         # initialize maximum cost
         maxCost= 0.0
         # initialize mFloor
-        mFloor = 0.2
+        mFloor = 0.6
           
         with self.env:
             with self.planning_env.robot.CreateRobotStateSaver():
@@ -64,25 +67,28 @@ class HeuristicRRTPlanner(object):
                     if heuristic:
                         r = 1
                         mQuality = 0
-
+                        vid1 = 1
                         while r > mQuality:
                             if count%10 == 0:
                                 sample_config = goal_config
                             else:
-                                sample_config = self.planning_env.HGenerateRandomConfiguration()
+                                sample_config = self.planning_env.GenerateRandomConfiguration()
                             vid1, nearest_vertex = tree.GetNearestVertex(sample_config) # Finding the nearest vertex
-#                            import pdb; pdb.set_trace()i
                             vertexNodeId = self.planning_env.discrete_env.ConfigurationToNodeId(nearest_vertex)
-                            vertexCost = self.computeVertexCost(vid1, vertexCosts, tree) + self.planning_env.ComputeHeuristicCost(vertexNodeId, goalId)
-                            vertexCosts[vid1] = vertexCost
+                            vertexCost = self.computeVertexCost(vid1, vertexCosts, tree)# + self.planning_env.ComputeHeuristicCost(vertexNodeId, goalId)
 
-                            mQuality = 1 - (vertexCost - optCost) / (maxCost - optCost)
+#                            vertexCosts[vid1] = vertexCost
+
+                            mQuality = 1.0 - numpy.divide((vertexCost-optCost), (maxCost-optCost))
                             print mQuality
                             mQuality = min(mQuality, mFloor)
                             r  = numpy.random.random(1)[0]
                             print r
-#                            import pdb; pdb.set_trace()
 
+#                            import pdb; pdb.set_trace()
+                            if vid1 == 0:
+                                break
+#                            import pdb; pdb.set_trace()
                     else:
                         if count%10 == 0:
                             sample_config = goal_config
@@ -104,8 +110,9 @@ class HeuristicRRTPlanner(object):
 #                        import pdb; pdb.set_trace()
                         prevId = tree.edges[vid2]
                         vertexNodeId2 = self.planning_env.discrete_env.ConfigurationToNodeId(sample_extend_config)
-                        newVertexCost = vertexCosts[prevId] + self.planning_env.ComputeDistance(prevId, vertexNodeId2)  #self.computeVertexCost(vid2, vertexCosts, tree)
+                        newVertexCost = vertexCosts[prevId] + self.planning_env.ComputeDistance(prevId, vertexNodeId2) + 3*self.planning_env.ComputeHeuristicCost(vertexNodeId2, goalId)
                         vertexCosts[vid2] = newVertexCost
+
                         if newVertexCost > maxCost:
                             maxCost = newVertexCost
 
