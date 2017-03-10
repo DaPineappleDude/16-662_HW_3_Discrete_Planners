@@ -104,4 +104,5 @@ class AStarPlanner(object):
             
         plan.append(start_config)
         plan = plan[::-1]
+        plan.append(goal_config)
         return plan

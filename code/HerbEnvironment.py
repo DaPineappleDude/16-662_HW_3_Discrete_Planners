@@ -46,7 +46,7 @@ class HerbEnvironment(object):
             check = self.robot.GetEnv().CheckCollision(rigidBody[0], rigidBody[1])
     
         elif bodyNum == 3: 
-            check = self.robot.GetEnv().CheckCollision(rigidBody[0],rigidBody[1],rigidBody[2])
+            check = self.robot.GetEnv().CheckCollision(rigidBody[0], rigidBody[1], rigidBody[2])
     
         if check is False and self.robot.CheckSelfCollision() is False:
             collision = False
