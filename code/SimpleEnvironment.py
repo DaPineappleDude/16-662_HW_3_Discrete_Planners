@@ -52,7 +52,6 @@ class SimpleEnvironment(object):
 
         node_config = self.discrete_env.NodeIdToConfiguration(node_id)
         neighbors_config = ec.neighbors(node_config, self.discrete_env, self.GetCollision)
-
         for config in neighbors_config:
             successors.append(self.discrete_env.ConfigurationToNodeId(config))
         
@@ -139,6 +138,26 @@ class SimpleEnvironment(object):
                 self.robot.SetTransform(s)
                 return np.array(config)
 
+
+    def HGenerateRandomConfiguration(self):
+        config = [0] * 2;
+        lower_limits, upper_limits = self.boundary_limits
+        #
+        # TODO: Generate and return a random configuration
+        #
+        s = self.robot.GetTransform()
+        while True:
+            config = np.multiply(np.subtract(upper_limits, lower_limits), np.random.random_sample((len(config),))) +  np.array(lower_limits)
+            snew = self.robot.GetTransform()
+            snew[0][3] = config[0]
+            snew[1][3] = config[1]
+            self.robot.SetTransform(snew)
+            #Check if 
+            if(not(self.robot.GetEnv().CheckCollision(self.robot.GetEnv().GetBodies()[0], self.robot.GetEnv().GetBodies()[1]))):
+                self.robot.SetTransform(s)
+                return np.array(config)
+
+
 #    DIFFERENT DISTANCE
     def HRRTComputeDistance(self, start_config, end_config):
        #
@@ -150,7 +169,7 @@ class SimpleEnvironment(object):
         return np.linalg.norm(start_config_temp - end_config_temp)
         pass
 
-    def Extend(self, start_config, end_config):
+    def Extend(self, start_config, end_config, epsilon):
         
         #
         # TODO: Implement a function which attempts to extend from 
@@ -158,7 +177,7 @@ class SimpleEnvironment(object):
         #
         s = self.robot.GetTransform()
         num_steps = 100
-        epsilon = 0.001
+  #      epsilon = 0.001
         dist = self.HRRTComputeDistance(start_config, end_config)
         step_size = dist/num_steps
         
@@ -207,7 +226,68 @@ class SimpleEnvironment(object):
             config += step_size*direction
             steps += 1
 
-    def ShortenPath(self, path, timeout=5.0):
+ 
+    def HExtend(self, start_config, end_config, epsilon):
+        
+        #
+        # TODO: Implement a function which attempts to extend from 
+        #   a start configuration to a goal configuration
+        #
+
+        s = self.robot.GetTransform()
+        num_steps = 100
+       # epsilon = .001
+        dist = self.HRRTComputeDistance(start_config, end_config)
+        step_size = dist/num_steps
+        
+        direction = (end_config - start_config)/dist
+        
+        config = start_config + step_size*direction
+        lower_limits, upper_limits = np.array(self.boundary_limits)
+
+        lower_limits = lower_limits.tolist()
+        upper_limits = upper_limits.tolist()
+        
+        steps = 1
+
+#        print self.robot.GetEnv().GetBodies()
+        while True:
+            snew = self.robot.GetTransform()
+            snew[0][3] = config[0]
+            snew[1][3] = config[1]
+            
+            self.robot.SetTransform(snew)
+            #Check if the first step is out of limits, return None
+            if((steps==1) and ((config.tolist() < lower_limits) or (config.tolist() > upper_limits))):
+                self.robot.SetTransform(s)
+            #    print "limits crossed"
+                return None
+            #Check if the first step collides then return None
+            elif((steps==1) and (self.robot.GetEnv().CheckCollision(self.robot.GetEnv().GetBodies()[0], self.robot.GetEnv().GetBodies()[1]))):
+                self.robot.SetTransform(s)
+            #    print "collision"
+                return None
+            #If config is out of limits, return previous step
+            elif((config.tolist() < lower_limits) or (config.tolist() > upper_limits)):
+                self.robot.SetTransform(s)
+             #   print "previous step"
+                return config - step_size*direction
+            #If collision occured later, return previous step
+            elif((self.robot.GetEnv().CheckCollision(self.robot.GetEnv().GetBodies()[0], self.robot.GetEnv().GetBodies()[1]))):
+                self.robot.SetTransform(s)
+              #  print "previous step"
+                return config - step_size*direction
+
+            if np.all((self.HRRTComputeDistance(config, end_config) < epsilon)):
+                self.robot.SetTransform(s)
+               # print "jai mata di"
+                return config
+            config += step_size*direction
+            steps += 1
+
+           
+
+    def ShortenPath(self, path, epsilon):
         
         # 
         # TODO: Implement a function which performs path shortening
@@ -238,7 +318,7 @@ class SimpleEnvironment(object):
             first_vertex =  ((np.array(path[g]) +  np.array(path[g-1]))/2).tolist()
             second_vertex = ((np.array(path[h]) +  np.array(path[h+1]))/2).tolist()
             
-            config = self.Extend(np.asarray(first_vertex), np.asarray(second_vertex))
+            config = self.Extend(np.asarray(first_vertex), np.asarray(second_vertex), epsilon)
             
             if(config != None):
                 #print vertex, vertex.dtype, local_path[ul], local_path[ul].dtype

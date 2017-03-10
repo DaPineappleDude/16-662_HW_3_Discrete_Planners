@@ -24,7 +24,17 @@ def main(robot, planning_env, planner):
         goal_config = numpy.array([3.0, 0.0])
 
     ts = time.time()
-    plan = planner.Plan(start_config, goal_config)
+    epsilon = 0.001
+
+    if args.planner == 'hrrt':
+        plan = planner.Plan(start_config, goal_config, 1, epsilon)
+    elif args.planner == 'rrt':
+        plan = planner.Plan(start_config, goal_config, 0, epsilon)
+    else:    
+        plan = planner.Plan(start_config, goal_config)
+    
+    
+    
     print "Execution Time: %0.2f" % (time.time() - ts)
     print "Vertex Number: %d" % len(plan)
     path_length = 0
@@ -36,6 +46,8 @@ def main(robot, planning_env, planner):
         for i in range(len(plan)-1):                        # ONLY FOR SIMPLE ROBOT
             planning_env.PlotEdge(plan[i], plan[i+1], 'r')
 
+    if args.planner == 'hrrt' or args.planner == 'rrt':
+        plan = planning_env.ShortenPath(plan, epsilon)
 
     traj = robot.ConvertPlanToTrajectory(plan)
 
@@ -91,6 +103,8 @@ if __name__ == "__main__":
     elif args.planner == 'dfs':
         planner = DepthFirstPlanner(planning_env, visualize)
     elif args.planner == 'hrrt':
+        planner = HeuristicRRTPlanner(planning_env, visualize)
+    elif args.planner == 'rrt':
         planner = HeuristicRRTPlanner(planning_env, visualize)
     else:
         print 'Unknown planner option: %s' % args.planner
