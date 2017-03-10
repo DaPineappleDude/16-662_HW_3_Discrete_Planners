@@ -71,19 +71,17 @@ class HeuristicRRTPlanner(object):
                             else:
                                 sample_config = self.planning_env.HGenerateRandomConfiguration()
                             vid1, nearest_vertex = tree.GetNearestVertex(sample_config) # Finding the nearest vertex
-#                            import pdb; pdb.set_trace()
-                            vertexCost = self.computeVertexCost(vid1, vertexCosts, tree)
+#                            import pdb; pdb.set_trace()i
+                            vertexNodeId = self.planning_env.discrete_env.ConfigurationToNodeId(nearest_vertex)
+                            vertexCost = self.computeVertexCost(vid1, vertexCosts, tree) + self.planning_env.ComputeHeuristicCost(vertexNodeId, goalId)
                             vertexCosts[vid1] = vertexCost
-
-                            if vertexCost > maxCost:
-                                maxCost = vertexCost
 
                             mQuality = 1 - (vertexCost - optCost) / (maxCost - optCost)
                             print mQuality
                             mQuality = min(mQuality, mFloor)
                             r  = numpy.random.random(1)[0]
                             print r
-                            import pdb; pdb.set_trace()
+#                            import pdb; pdb.set_trace()
 
                     else:
                         if count%10 == 0:
@@ -103,9 +101,13 @@ class HeuristicRRTPlanner(object):
                     tree.AddEdge(vid1,vid2)
                     
                     if heuristic:
-                        newVertexCost = self.computeVertexCost(vid2, vertexCosts, tree)
+#                        import pdb; pdb.set_trace()
+                        prevId = tree.edges[vid2]
+                        vertexNodeId2 = self.planning_env.discrete_env.ConfigurationToNodeId(sample_extend_config)
+                        newVertexCost = vertexCosts[prevId] + self.planning_env.ComputeDistance(prevId, vertexNodeId2)  #self.computeVertexCost(vid2, vertexCosts, tree)
                         vertexCosts[vid2] = newVertexCost
-                    
+                        if newVertexCost > maxCost:
+                            maxCost = newVertexCost
 
                     if (robot_name != 'Herb2'): # Visualize only for PR2
                         self.planning_env.PlotEdge(nearest_vertex,plan_temp[-1])
