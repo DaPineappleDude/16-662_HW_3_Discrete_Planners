@@ -47,12 +47,12 @@ class DiscreteEnvironment(object):
 		# TODO: DONE
 		# This function maps a configuration in the full configuration space
 		# to a grid coordinate in discrete space
-		#
 		coord = [0] * self.dimension
 		for idx in range(self.dimension):
 			coord[idx] = (config[idx] - self.lower_limits[idx])
-			coord[idx] = round(coord[idx]/self.resolution)
-			#coord[idx] = round(coord[idx]*self.num_cells[idx])
+			coord[idx] = coord[idx]/(self.upper_limits[idx] - self.lower_limits[idx])
+			coord[idx] = coord[idx]*self.num_cells[idx]
+			coord[idx] = np.floor(coord[idx])
 		return coord
 
 	def GridCoordToConfiguration(self, coord):
@@ -63,7 +63,10 @@ class DiscreteEnvironment(object):
 		#
 		config = [0] * self.dimension
 		for idx in range(self.dimension):
-			config[idx] = self.lower_limits[idx] + coord[idx] * self.resolution
+			config[idx] = coord[idx] + .5
+			config[idx] = config[idx]*(self.upper_limits[idx] - self.lower_limits[idx])
+			config[idx] = config[idx]/self.num_cells[idx]
+			config[idx] = round(config[idx], 3)
 		return config
 
 	def GridCoordToNodeId(self,coord):
@@ -90,7 +93,7 @@ class DiscreteEnvironment(object):
 		for idx in xrange(self.dimension, 0, -1):
 			idx = idx - 1 
 			product  = (product/self.num_cells[idx])
-			coord[idx] = int(rem/product)
+			coord[idx] = (rem//product)
 			rem = rem%product
 		return coord
 
