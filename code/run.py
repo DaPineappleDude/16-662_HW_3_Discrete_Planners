@@ -24,7 +24,7 @@ def main(robot, planning_env, planner):
         goal_config = numpy.array([3.0, 0.0])
 
     ts = time.time()
-    epsilon = 0.001
+    epsilon = 0.01
 
     if args.planner == 'hrrt':
         plan = planner.Plan(start_config, goal_config, 1, epsilon)

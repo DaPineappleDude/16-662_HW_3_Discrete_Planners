@@ -61,9 +61,8 @@ class SimpleEnvironment(object):
 
         start_coord = self.discrete_env.NodeIdToGridCoord(start_id)
         end_coord = self.discrete_env.NodeIdToGridCoord(end_id)
-
         dist = ec.cost(start_coord, end_coord)
-
+        dist = float(dist)
         return dist
 
     def ComputeHeuristicCost(self, start_id, goal_id):
@@ -72,7 +71,7 @@ class SimpleEnvironment(object):
         goal_coord = self.discrete_env.NodeIdToGridCoord(goal_id)
 
         cost = ec.cost(start_coord, goal_coord)
-
+        cost = float(cost)
         return cost
 
     def InitializePlot(self, goal_config):
@@ -138,24 +137,6 @@ class SimpleEnvironment(object):
                 self.robot.SetTransform(s)
                 return np.array(config)
 
-
-    def HGenerateRandomConfiguration(self):
-        config = [0] * 2;
-        lower_limits, upper_limits = self.boundary_limits
-        #
-        # TODO: Generate and return a random configuration
-        #
-        s = self.robot.GetTransform()
-        while True:
-            config = np.multiply(np.subtract(upper_limits, lower_limits), np.random.random_sample((len(config),))) +  np.array(lower_limits)
-            snew = self.robot.GetTransform()
-            snew[0][3] = config[0]
-            snew[1][3] = config[1]
-            self.robot.SetTransform(snew)
-            #Check if 
-            if(not(self.robot.GetEnv().CheckCollision(self.robot.GetEnv().GetBodies()[0], self.robot.GetEnv().GetBodies()[1]))):
-                self.robot.SetTransform(s)
-                return np.array(config)
 
 
 #    DIFFERENT DISTANCE
@@ -225,67 +206,6 @@ class SimpleEnvironment(object):
                 return config
             config += step_size*direction
             steps += 1
-
- 
-    def HExtend(self, start_config, end_config, epsilon):
-        
-        #
-        # TODO: Implement a function which attempts to extend from 
-        #   a start configuration to a goal configuration
-        #
-
-        s = self.robot.GetTransform()
-        num_steps = 100
-       # epsilon = .001
-        dist = self.HRRTComputeDistance(start_config, end_config)
-        step_size = dist/num_steps
-        
-        direction = (end_config - start_config)/dist
-        
-        config = start_config + step_size*direction
-        lower_limits, upper_limits = np.array(self.boundary_limits)
-
-        lower_limits = lower_limits.tolist()
-        upper_limits = upper_limits.tolist()
-        
-        steps = 1
-
-#        print self.robot.GetEnv().GetBodies()
-        while True:
-            snew = self.robot.GetTransform()
-            snew[0][3] = config[0]
-            snew[1][3] = config[1]
-            
-            self.robot.SetTransform(snew)
-            #Check if the first step is out of limits, return None
-            if((steps==1) and ((config.tolist() < lower_limits) or (config.tolist() > upper_limits))):
-                self.robot.SetTransform(s)
-            #    print "limits crossed"
-                return None
-            #Check if the first step collides then return None
-            elif((steps==1) and (self.robot.GetEnv().CheckCollision(self.robot.GetEnv().GetBodies()[0], self.robot.GetEnv().GetBodies()[1]))):
-                self.robot.SetTransform(s)
-            #    print "collision"
-                return None
-            #If config is out of limits, return previous step
-            elif((config.tolist() < lower_limits) or (config.tolist() > upper_limits)):
-                self.robot.SetTransform(s)
-             #   print "previous step"
-                return config - step_size*direction
-            #If collision occured later, return previous step
-            elif((self.robot.GetEnv().CheckCollision(self.robot.GetEnv().GetBodies()[0], self.robot.GetEnv().GetBodies()[1]))):
-                self.robot.SetTransform(s)
-              #  print "previous step"
-                return config - step_size*direction
-
-            if np.all((self.HRRTComputeDistance(config, end_config) < epsilon)):
-                self.robot.SetTransform(s)
-               # print "jai mata di"
-                return config
-            config += step_size*direction
-            steps += 1
-
-           
 
     def ShortenPath(self, path, epsilon):
         
