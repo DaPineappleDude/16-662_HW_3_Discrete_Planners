@@ -96,7 +96,7 @@ class AStarPlanner(object):
 
                      
         plan_id = goal_id
-
+        print "nodes expanded: %d" % len(edges)
         while plan_id != start_id:
             config = self.getConfig(plan_id)
             plan.append(config)

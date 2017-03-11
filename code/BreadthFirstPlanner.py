@@ -37,6 +37,7 @@ class BreadthFirstPlanner(object):
                     if self.visualize:
                         self.planning_env.PlotEdge(self.planning_env.discrete_env.NodeIdToConfiguration(curr_id), \
                                                    self.planning_env.discrete_env.NodeIdToConfiguration(elem), 'k')
+        print "nodes expanded: %d" % len(self.nodes)
         plan.append(goal_config)
         node_id = goal_id 
         while self.nodes[node_id] != start_id:
