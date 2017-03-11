@@ -71,7 +71,7 @@ class HerbEnvironment(object):
         end_coord = self.discrete_env.NodeIdToGridCoord(end_id)
 
         dist = ec.cost(start_coord, end_coord)
- 
+        dis = float(dist) 
         return dist
 
     def ComputeHeuristicCost(self, start_id, goal_id):
@@ -80,7 +80,7 @@ class HerbEnvironment(object):
         goal_coord = self.discrete_env.NodeIdToGridCoord(goal_id)
 
         cost = ec.cost(start_coord, goal_coord)
-        
+        cost = float(cost)
         return cost
 
 #
@@ -117,7 +117,7 @@ class HerbEnvironment(object):
                 self.robot.SetActiveDOFValues(s)
                 return numpy.array(config)
 
-    def Extend(self, start_config, end_config):
+    def Extend(self, start_config, end_config, epsilon):
         
         #
         # TODO: Implement a function which attempts to extend from 
@@ -125,7 +125,7 @@ class HerbEnvironment(object):
         #
         s = self.robot.GetActiveDOFValues()
         num_steps = 10
-        epsilon = 0.01
+#        epsilon = 0.01
         dist = self.HRRTComputeDistance(start_config, end_config)
         step_size = dist/num_steps
         
